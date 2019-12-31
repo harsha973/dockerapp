@@ -130,7 +130,48 @@ Docker machine
 		- docker-machine create --driver <driver_name> <access_token_name_for_drive> <access_token> <vm_name>
 		- ex : docker-machine create --drive digitalocean --digitalocean-access-token bdfgs34df4grbhdf54ytgdfgbdfy54rgesdfbfbfdf docker-machine-docker-app
 		- After this CLI prompts to use `docker-machine env docker-app-machine` for linking
-		- Then it asks to `eval $(docker-machine env docker-app-machine)` to export env variables which updates docker-vm
+		- Then it asks to `eval $(docker-machine env docker-app-machine)` to export env variables which sets as default docker-machine to speak in shell
+
+Docker swarm
+	- When you need to orchestrate multiple containers ( replicas or different containers ), we use concept of nodes
+	- There is one mananger node and mulitple worker nodes controlled by manager
+	- Clients speak to Manager and is abstracted from workers
+	- To create manager and worker node
+		- Basic ex
+			- Create Worker VM using docker machine
+				- docker-machine create --drive digitalocean --digitalocean-access-token bdfgs34df4grbhdf54ytgdfgbdfy54rgesdfbfbfdf worker-node
+			- Create Manager VM using docker machine
+				- docker-machine create --drive digitalocean --digitalocean-access-token bdfgs34df4grbhdf54ytgdfgbdfy54rgesdfbfbfdf manager-node
+				- Set this as default docker-machine to speak to using eval $(docker-machine env manager-node)
+			- Init swarm 
+				- Make sure manager node is active at this point.
+				- docker swarm init 
+					- only for digital ocean
+						- --advertise-addr - to provide IP address ( digitalocean exposes internal and public IP, so we have choice to choose)
+			- SSH into worker to join manager
+				- docker-machine ssh worker-node
+					- Now in bash
+					- docker swarm join --token SWMTKN-1-5cu8hhagtgj8l814w3whjn889gxm7rvc6n1e7ldlgtekbmd14f-eettqo136eiy2m1j30o38vjl8 167.71.168.147:2377
+					- This command is suggested when initialising swarm
+
+Docker stack
+	- Live collection of all services mentioned in docker compose file
+	- Creates stack from docker compose file
+		- docker stack deploy
+	- In swarm mode, we cannot use docker compose commands. Docker compose is meant for single node
+	- In swarm mode, Docker stack is like a docker compose. You can use docker stack to manage services
+	- deploy
+		- docker stack deploy --compose-file <file_name> <stack_name>
+		- ex : docker stack deploy --compose-file prod.yml docker_app_stack
+		- options
+			- --compose-file - for mentioning file for execution of commands
+	- List of all stacks
+		- docker stack ls
+	- List of all services in stack
+		- docker stack services <stack_name>
+		- ex : docker stack services docker_app_stack
+
+
 
 
 
