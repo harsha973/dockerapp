@@ -1,10 +1,20 @@
 version: "3.0"
 services:
   dockerapp:
+<<<<<<< HEAD
     image: jleetutorial/dockerapp
     ports:
       - "5000:5000"
     depends_on:
       - redis
+=======
+    image: harsha973/dockerapp
+    ports:
+      - "4000:5000"
+    depends_on:
+      - redis
+    deploy:
+      replicas: 2
+>>>>>>> swarm-deploy
   redis:
     image: redis:3.2.0

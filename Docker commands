@@ -1,0 +1,185 @@
+Docker commands
+Run 
+	- docker run <repo:tag>
+	- Options
+		-it - Opens shell of the container after running command
+		-d - run in background
+		-p - to map ports on container to host ex: -p 5000:5000 
+		- --name - to map to different name ex: --name redis
+			- ex : docker run -d --name customredisname redis:3.2.1
+		- --net - to add network
+			- ex : docker run -d container_name --net custom_creted_network
+Commit
+	- docker commit <container id> <repo>
+		ex : docker commit 75ed7f3f2bb0 sreespark/debian:1.0.0
+		Pushes the changes to the repository		
+Build
+	- Builds from DockerFile
+		- docker build -t <repo> .
+			- . means local 
+			- repo is something like sree/debian
+			- -t is tag
+			- additinally, you have to create and add the commands you need to run while building such as installing packages, copying files etc
+	- Build and commit changes
+		- docker run -it <repo>
+			- repo is something in docker hub or local
+		- Inside container modify by installing packages or creating files
+		- docker commit <container_id> <repo:version>
+			- Container id can be seen using 'docker ps' command
+Rename
+	- docker tag <containerid> <repo:version>
+		- ex : docker tag 234dfg34dfgdf3 sree/debian_renamed:1.01
+Start
+	- Start is called when the container already exists
+		- ex : docker start <containername>
+
+Login to docker hub
+	- docker login --username=<uname>
+
+Push to docker hub
+	- docker push <repo:version>
+
+IP address of docker machine
+	- docker-machine ls
+
+Execute command in running container
+	- docker exec -it <containerid> <command to run>
+		ex: docker exec -it sadfsder23434ed bash
+
+Running process in a container
+	- Login in to running container using docker exec & bash
+	- ps axu
+		- ps - process status
+		- a = show processes for all users
+		- u = display the process's user/owner
+		- x = also show processes not attached to a terminal
+Network
+	- inspect - docker network inspect
+	- list of networks - docker network ls
+	- NONE
+		- Makes the container isolated and cannot speak with any other things externally or internally (I think)
+		- Provides maximum level of network protection
+		- Not a good choice if internet connection is required
+		- docker run -d --net NONE <containername>
+	- BRIDGE
+		- Provides connectivity to external world
+		- Default network when a container is created
+		- Two interfaces 
+			- loopback - which is NONE
+			- private - connected to bridge interface to speak to external world
+		- Create a bridge with name
+			- docker network create --driver <netowork_type> --name <name>
+				- ex : docker network create --driver bridge --name my_network_bridge
+			- This created bridge cannot speak to other containers
+		- Create a container with custom bridge
+			- docker run -d <container_name> --net <custom_network>
+				- ex : docker run -d container_1 --net my_custom_bridge
+		- Connect container to another network
+			- docker network connect my_custom_bridge container_name
+		- disconnect container from another network
+			- docker network disconnect my_custom_bridge container_name
+		- ping another container
+			- docker exec -it container_name ping <ip_address>
+	- HOST
+		- This runs on host machine stack
+		- unprotected
+		- pro - performance
+		- highly unlikey used
+		- docker run -d --net host <image> 
+			- ex : docker run -d --name container_1 --net host busybox:1.0.0 sleep 1000
+	- OVERLAY
+		- supports multi host 
+
+
+Docker Compose
+	- uses docker-compose.yml
+	- Start container
+		- docker-compose up
+			- to execte the steps in docker-compose.yml
+			- Options
+				- -d - to run in background
+				- -f - to override docker-compose.yml
+					ex : docker-compose -f prod.yml up -d
+		- 
+	- Logging
+		- docker-compose logs 
+			- Logs all the containers
+		- docker-compose logs -f
+			- For following any new logs
+			- -f - followup
+		- docker-compose logs <container_name>
+			- For Logging specific container
+			- Ex : docker-compose logs dockerapp
+	- Stop 
+		- docker-compose stop
+			- Stop all containers without removing
+	- Remove
+		- docker-compose rm
+			- Removes all containers
+	- Build
+		- docker-compose build
+			- Triggeres rebuilding even if contianers exist
+		- docker-compose up --build
+			- This worked as well
+
+
+			
+Docker machine
+	- To provision docker app to cloud providers like aws, google, digital ocean
+	- Create a VM 
+		- docker-machine create --driver <driver_name> <access_token_name_for_drive> <access_token> <vm_name>
+		- ex : docker-machine create --drive digitalocean --digitalocean-access-token bdfgs34df4grbhdf54ytgdfgbdfy54rgesdfbfbfdf docker-machine-docker-app
+		- After this CLI prompts to use `docker-machine env docker-app-machine` for linking
+		- Then it asks to `eval $(docker-machine env docker-app-machine)` to export env variables which sets as default docker-machine to speak in shell
+
+Docker swarm
+	- When you need to orchestrate multiple containers ( replicas or different containers ), we use concept of nodes
+	- There is one mananger node and mulitple worker nodes controlled by manager
+	- Clients speak to Manager and is abstracted from workers
+	- To create manager and worker node
+		- Basic ex
+			- Create Worker VM using docker machine
+				- docker-machine create --drive digitalocean --digitalocean-access-token bdfgs34df4grbhdf54ytgdfgbdfy54rgesdfbfbfdf worker-node
+			- Create Manager VM using docker machine
+				- docker-machine create --drive digitalocean --digitalocean-access-token bdfgs34df4grbhdf54ytgdfgbdfy54rgesdfbfbfdf manager-node
+				- Set this as default docker-machine to speak to using eval $(docker-machine env manager-node)
+			- Init swarm 
+				- Make sure manager node is active at this point.
+				- docker swarm init 
+					- only for digital ocean
+						- --advertise-addr - to provide IP address ( digitalocean exposes internal and public IP, so we have choice to choose)
+			- SSH into worker to join manager
+				- docker-machine ssh worker-node
+					- Now in bash
+					- docker swarm join --token SWMTKN-1-5cu8hhagtgj8l814w3whjn889gxm7rvc6n1e7ldlgtekbmd14f-eettqo136eiy2m1j30o38vjl8 167.71.168.147:2377
+					- This command is suggested when initialising swarm
+
+Docker stack
+	- Live collection of all services mentioned in docker compose file
+	- Creates stack from docker compose file
+		- docker stack deploy
+	- In swarm mode, we cannot use docker compose commands. Docker compose is meant for single node
+	- In swarm mode, Docker stack is like a docker compose. You can use docker stack to manage services
+	- deploy
+		- docker stack deploy --compose-file <file_name> <stack_name>
+		- ex : docker stack deploy --compose-file prod.yml docker_app_stack
+		- options
+			- --compose-file - for mentioning file for execution of commands
+	- List of all stacks
+		- docker stack ls
+	- List of all services in stack
+		- docker stack services <stack_name>
+		- ex : docker stack services docker_app_stack
+	- Remove
+		- docker stack rm <stack_name>
+
+
+
+
+
+
+
+
+
+
+
