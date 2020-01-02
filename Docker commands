@@ -170,6 +170,8 @@ Docker stack
 	- List of all services in stack
 		- docker stack services <stack_name>
 		- ex : docker stack services docker_app_stack
+	- Remove
+		- docker stack rm <stack_name>
 
 
 
